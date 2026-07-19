@@ -16,11 +16,16 @@ int wmain() {
     using namespace battery_logger;
     if (ActiveLogExists(kActiveLog)) {
         std::puts("Previous battery test found; generating its report.");
-        if (!AnalyzeLog(kActiveLog, kReport) || !ArchiveActiveLog(kActiveLog, L".")) {
+        const bool report_written = AnalyzeLog(kActiveLog, kReport);
+        if (!ArchiveActiveLog(kActiveLog, L".")) {
             std::fputs("Could not finalize the previous test. Resolve the file error and run again.\n", stderr);
             return 1;
         }
-        std::puts("Previous test finalized. See BatteryDischarge_report.txt.");
+        if (report_written) {
+            std::puts("Previous test finalized. See BatteryDischarge_report.txt.");
+        } else {
+            std::puts("Previous log had too few valid samples for a report and was archived.");
+        }
         return 0;
     }
 

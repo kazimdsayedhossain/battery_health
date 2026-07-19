@@ -77,9 +77,11 @@ bool BatteryReader::ReadMetadata() noexcept {
 
 bool BatteryReader::ReadSample(BatterySample& sample) const noexcept {
     BATTERY_STATUS status{};
-    ULONG battery_tag = metadata_.tag;
+    // QUERY_STATUS expects a wait-status request, even for an immediate query.
+    BATTERY_WAIT_STATUS wait_status{};
+    wait_status.BatteryTag = metadata_.tag;
     DWORD returned = 0;
-    if (!DeviceIoControl(device_.get(), IOCTL_BATTERY_QUERY_STATUS, &battery_tag, sizeof(battery_tag),
+    if (!DeviceIoControl(device_.get(), IOCTL_BATTERY_QUERY_STATUS, &wait_status, sizeof(wait_status),
             &status, sizeof(status), &returned, nullptr)) {
         last_error_ = GetLastError();
         return false;

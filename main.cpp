@@ -20,6 +20,8 @@ int wmain() {
             std::fputs("Could not finalize the previous test. Resolve the file error and run again.\n", stderr);
             return 1;
         }
+        std::puts("Previous test finalized. See BatteryDischarge_report.txt.");
+        return 0;
     }
 
     BatteryReader reader;

@@ -5,7 +5,8 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    # The CMake generator below requires the Visual Studio 2022 toolchain.
+    runs-on: windows-2022
     steps:
       - name: Check out source
         uses: actions/checkout@v5

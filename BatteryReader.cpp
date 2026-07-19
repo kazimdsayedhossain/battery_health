@@ -1,14 +1,15 @@
 #include "BatteryReader.h"
 
 #include <initguid.h>
-#include <batclass.h>
+#include <winioctl.h>
+#include <poclass.h>
 #include <setupapi.h>
 #include <vector>
 
 namespace battery_logger {
 
 bool BatteryReader::Open() {
-    HDEVINFO devices = SetupDiGetClassDevs(&GUID_DEVINTERFACE_BATTERY, nullptr, nullptr,
+    HDEVINFO devices = SetupDiGetClassDevs(&GUID_DEVICE_BATTERY, nullptr, nullptr,
         DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
     if (devices == INVALID_HANDLE_VALUE) { last_error_ = GetLastError(); return false; }
 
@@ -16,7 +17,7 @@ bool BatteryReader::Open() {
     for (DWORD index = 0; !opened; ++index) {
         SP_DEVICE_INTERFACE_DATA interface_data{};
         interface_data.cbSize = sizeof(interface_data);
-        if (!SetupDiEnumDeviceInterfaces(devices, nullptr, &GUID_DEVINTERFACE_BATTERY, index, &interface_data)) {
+        if (!SetupDiEnumDeviceInterfaces(devices, nullptr, &GUID_DEVICE_BATTERY, index, &interface_data)) {
             last_error_ = GetLastError();
             break;
         }
@@ -76,8 +77,9 @@ bool BatteryReader::ReadMetadata() noexcept {
 
 bool BatteryReader::ReadSample(BatterySample& sample) const noexcept {
     BATTERY_STATUS status{};
+    ULONG battery_tag = metadata_.tag;
     DWORD returned = 0;
-    if (!DeviceIoControl(device_.get(), IOCTL_BATTERY_QUERY_STATUS, &metadata_.tag, sizeof(metadata_.tag),
+    if (!DeviceIoControl(device_.get(), IOCTL_BATTERY_QUERY_STATUS, &battery_tag, sizeof(battery_tag),
             &status, sizeof(status), &returned, nullptr)) {
         last_error_ = GetLastError();
         return false;

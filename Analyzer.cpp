@@ -20,8 +20,8 @@ struct Summary {
 }
 
 bool AnalyzeLog(const wchar_t* csv_path, const wchar_t* report_path) noexcept {
-    FILE* input = _wfopen(csv_path, L"rb");
-    if (input == nullptr) { return false; }
+    FILE* input = nullptr;
+    if (_wfopen_s(&input, csv_path, L"rb") != 0) { return false; }
     char line[512]{};
     std::fgets(line, sizeof(line), input); // Header.
     Summary summary{};
@@ -31,10 +31,10 @@ bool AnalyzeLog(const wchar_t* csv_path, const wchar_t* report_path) noexcept {
         char timestamp[32]{};
         unsigned long tag, voltage, remaining, full, design, cycles, temperature, flags, ac, charging;
         long rate, power;
-        const int parsed = std::sscanf(line, "%31[^,],%lu,%lu,%ld,%ld,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu",
-            timestamp, &tag, &voltage, &rate, &power, &remaining, &full, &design, &cycles,
+        const int parsed = sscanf_s(line, "%31[^,],%lu,%lu,%ld,%ld,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu",
+            timestamp, static_cast<unsigned>(sizeof(timestamp)), &tag, &voltage, &rate, &power, &remaining, &full, &design, &cycles,
             &temperature, &flags, &ac, &charging);
-        if (parsed != 14) { continue; }
+        if (parsed != 13) { continue; }
         if (!have_previous) { summary.min_voltage_mv = voltage; have_previous = true; }
         summary.min_voltage_mv = (voltage < summary.min_voltage_mv) ? voltage : summary.min_voltage_mv;
         summary.max_temperature_dk = (temperature > summary.max_temperature_dk) ? temperature : summary.max_temperature_dk;
@@ -51,8 +51,8 @@ bool AnalyzeLog(const wchar_t* csv_path, const wchar_t* report_path) noexcept {
     }
     std::fclose(input);
     if (summary.samples < 2) { return false; }
-    FILE* report = _wfopen(report_path, L"wb");
-    if (report == nullptr) { return false; }
+    FILE* report = nullptr;
+    if (_wfopen_s(&report, report_path, L"wb") != 0) { return false; }
     const double hours = (summary.samples - 1) * 7.0 / 3600.0;
     const double average_power = summary.discharge_rate_samples == 0 ? 0.0 :
         summary.rate_sum_mw / summary.discharge_rate_samples;

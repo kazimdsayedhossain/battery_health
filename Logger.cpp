@@ -1,7 +1,7 @@
 #include "Logger.h"
 #include "Utils.h"
 
-#include <batclass.h>
+#include <poclass.h>
 #include <cstdio>
 
 namespace battery_logger {
@@ -10,8 +10,7 @@ Logger::~Logger() { Close(); }
 
 bool Logger::OpenNew(const wchar_t* path, const BatteryMetadata& metadata) noexcept {
     metadata_ = metadata;
-    file_ = _wfopen(path, L"wb");
-    if (file_ == nullptr) { return false; }
+    if (_wfopen_s(&file_, path, L"wb") != 0) { return false; }
     // A caller-owned buffer prevents the CRT from allocating during sampling.
     static char file_buffer[4096];
     setvbuf(file_, file_buffer, _IOFBF, sizeof(file_buffer));
